@@ -20,7 +20,9 @@ package org.apache.sling.scripting.javascript.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.Dictionary;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.jar.Attributes;
@@ -236,21 +238,32 @@ public class RhinoJavaScriptEngineFactory extends AbstractScriptEngineFactory im
         String rhinoVersion = null;
         InputStream ins = null;
         try {
-            ins = getClass().getResourceAsStream("/META-INF/MANIFEST.MF");
-            if (ins != null) {
-                Manifest manifest = new Manifest(ins);
-                Attributes attrs = manifest.getMainAttributes();
-                rhinoVersion = attrs.getValue("Rhino-Version");
+            Enumeration<URL> resources = RhinoJavaScriptEngineFactory.class.getClassLoader().getResources("META-INF/MANIFEST.MF");
+            boolean foundEntries = false;
+            while (resources.hasMoreElements() && !foundEntries) {
+                try {
+                    URL url = resources.nextElement();
+                    ins = url.openStream();
+                    if (ins != null) {
+                        Manifest manifest = new Manifest(ins);
+                        Attributes attrs = manifest.getMainAttributes();
+                        String bundleName = attrs.getValue("Bundle-Name");
+                        if (bundleName != null && "Apache Sling Scripting JavaScript Support".equals(bundleName)) {
+                            rhinoVersion = attrs.getValue("Rhino-Version");
+                            foundEntries = true;
+                        }
+                    }
+                } finally {
+                    if (ins != null) {
+                        try {
+                            ins.close();
+                        } catch (IOException ignore) {
+                        }
+                    }
+                }
             }
         } catch (IOException ioe) {
             log.warn("Unable to read Rhino version.", ioe);
-        } finally {
-            if (ins != null) {
-                try {
-                    ins.close();
-                } catch (IOException ignore) {
-                }
-            }
         }
 
         optimizationLevel = readOptimizationLevel(configuration);
