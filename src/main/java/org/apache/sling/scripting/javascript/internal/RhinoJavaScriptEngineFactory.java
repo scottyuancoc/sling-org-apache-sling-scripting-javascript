@@ -18,13 +18,19 @@
  */
 package org.apache.sling.scripting.javascript.internal;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Dictionary;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
+
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 
 import org.apache.sling.commons.classloader.DynamicClassLoaderManager;
+import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.scripting.api.AbstractScriptEngineFactory;
 import org.apache.sling.scripting.api.ScriptCache;
 import org.apache.sling.scripting.javascript.RhinoHostObjectProvider;
@@ -68,9 +74,12 @@ import org.slf4j.LoggerFactory;
         Constants.SERVICE_VENDOR + "=The Apache Software Foundation",
         "extensions=" + RhinoJavaScriptEngineFactory.ECMA_SCRIPT_EXTENSION,
         "extensions=" + RhinoJavaScriptEngineFactory.ESP_SCRIPT_EXTENSION,
+        "mimeTypes=text/ecmascript",
         "mimeTypes=text/javascript",
         "mimeTypes=application/ecmascript",
         "mimeTypes=application/javascript",
+        "names=rhino",
+        "names=Rhino",
         "names=javascript",
         "names=JavaScript",
         "names=ecmascript",
@@ -110,7 +119,10 @@ public class RhinoJavaScriptEngineFactory extends AbstractScriptEngineFactory im
 
     private int optimizationLevel;
 
-    private String languageVersion;
+    private static final int RHINO_LANGUAGE_VERSION = Context.VERSION_ES6;
+    private static final String LANGUAGE_VERSION = "partial ECMAScript 2015 support";
+    private static final String LANGUAGE_NAME = "ECMAScript";
+
 
     private SlingWrapFactory wrapFactory;
 
@@ -129,11 +141,11 @@ public class RhinoJavaScriptEngineFactory extends AbstractScriptEngineFactory im
     }
 
     public String getLanguageName() {
-        return "ECMAScript";
+        return LANGUAGE_NAME;
     }
 
     public String getLanguageVersion() {
-        return languageVersion;
+        return LANGUAGE_VERSION;
     }
 
     /**
@@ -143,8 +155,12 @@ public class RhinoJavaScriptEngineFactory extends AbstractScriptEngineFactory im
      * @return an integer from 0-9 with 9 being the most aggressive optimization, or
      * -1 if interpreted mode is to be used
      */
-    public int getOptimizationLevel() {
+    int getOptimizationLevel() {
         return optimizationLevel;
+    }
+
+    int rhinoLanguageVersion() {
+        return Context.VERSION_ES6;
     }
 
     public Object getParameter(String name) {
@@ -170,6 +186,7 @@ public class RhinoJavaScriptEngineFactory extends AbstractScriptEngineFactory im
             final Context rhinoContext = Context.enter();
             try {
                 rhinoContext.setOptimizationLevel(optimizationLevel);
+                rhinoContext.setLanguageVersion(RHINO_LANGUAGE_VERSION);
                 Scriptable tmpScope = rhinoContext.initStandardObjects(new ImporterTopLevel(rhinoContext), false);
 
                 // default classes
@@ -215,22 +232,40 @@ public class RhinoJavaScriptEngineFactory extends AbstractScriptEngineFactory im
         Dictionary<?, ?> props = context.getProperties();
         boolean debugging = getProperty("org.apache.sling.scripting.javascript.debug", props, context.getBundleContext(), false);
 
+        // try to get the manifest
+        String rhinoVersion = null;
+        InputStream ins = null;
+        try {
+            ins = getClass().getResourceAsStream("/META-INF/MANIFEST.MF");
+            if (ins != null) {
+                Manifest manifest = new Manifest(ins);
+                Attributes attrs = manifest.getMainAttributes();
+                rhinoVersion = attrs.getValue("Rhino-Version");
+            }
+        } catch (IOException ioe) {
+            log.warn("Unable to read Rhino version.", ioe);
+        } finally {
+            if (ins != null) {
+                try {
+                    ins.close();
+                } catch (IOException ignore) {
+                }
+            }
+        }
+
         optimizationLevel = readOptimizationLevel(configuration);
 
         // setup the wrap factory
         wrapFactory = new SlingWrapFactory();
 
         // initialize the Rhino Context Factory
-        SlingContextFactory.setup(this);
+        SlingContextFactory.setup(this, RHINO_LANGUAGE_VERSION);
 
-        Context cx = Context.enter();
-        setEngineName(getEngineName() + " (" + cx.getImplementationVersion() + ")");
-        languageVersion = String.valueOf(cx.getLanguageVersion());
-        Context.exit();
+        setEngineName(getEngineName() + " (Rhino " + (rhinoVersion != null ? rhinoVersion : "unknown") + ")");
 
-        setExtensions(ECMA_SCRIPT_EXTENSION, ESP_SCRIPT_EXTENSION);
-        setMimeTypes("text/javascript", "application/ecmascript", "application/javascript");
-        setNames("javascript", ECMA_SCRIPT_EXTENSION, ESP_SCRIPT_EXTENSION);
+        setExtensions(PropertiesUtil.toStringArray(props.get("extensions")));
+        setMimeTypes(PropertiesUtil.toStringArray(props.get("mimeTypes")));
+        setNames(PropertiesUtil.toStringArray(props.get("names")));
 
         final ContextFactory contextFactory = ContextFactory.getGlobal();
         if (contextFactory instanceof SlingContextFactory) {

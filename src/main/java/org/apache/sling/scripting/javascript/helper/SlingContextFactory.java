@@ -43,13 +43,16 @@ public class SlingContextFactory extends ContextFactory {
 
     private boolean debuggerActive;
 
+    private int languageVersion;
+
     // conditionally setup the global ContextFactory to be ours. If
     // a global context factory has already been set, we have lost
     // and cannot set this one.
-    public static void setup(ScopeProvider sp) {
+    public static void setup(ScopeProvider sp, int languageVersion) {
         // TODO what do we do in the other case? debugger won't work
         if (!hasExplicitGlobal()) {
-            initGlobal(new SlingContextFactory(sp));
+            initGlobal(new SlingContextFactory(sp,
+                    Context.isValidLanguageVersion(languageVersion) ? languageVersion : Context.VERSION_DEFAULT));
         }
     }
 
@@ -61,8 +64,9 @@ public class SlingContextFactory extends ContextFactory {
     }
 
     // private as instances of this class are only used by setup()
-    private SlingContextFactory(ScopeProvider sp) {
+    private SlingContextFactory(ScopeProvider sp, int languageVersion) {
         scopeProvider = sp;
+        this.languageVersion = languageVersion;
     }
 
     private void dispose() {
@@ -81,7 +85,9 @@ public class SlingContextFactory extends ContextFactory {
 
     @Override
     protected Context makeContext() {
-        return new SlingContext();
+        Context context = new SlingContext();
+        context.setLanguageVersion(languageVersion);
+        return context;
     }
 
     @Override

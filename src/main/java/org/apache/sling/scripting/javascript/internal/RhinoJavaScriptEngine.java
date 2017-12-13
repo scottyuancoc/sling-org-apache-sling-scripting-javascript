@@ -93,6 +93,7 @@ public class RhinoJavaScriptEngine extends AbstractSlingScriptEngine implements 
             scriptReader = wrapReaderIfEspScript(scriptReader, scriptName);
             try {
                 final Context rhinoContext = Context.enter();
+                rhinoContext.setLanguageVersion(((RhinoJavaScriptEngineFactory)getFactory()).rhinoLanguageVersion());
                 rhinoContext.setOptimizationLevel(optimizationLevel());
 
                 if (!ScriptRuntime.hasTopCall(rhinoContext)) {
@@ -239,6 +240,7 @@ public class RhinoJavaScriptEngine extends AbstractSlingScriptEngine implements 
             try {
 
                 final Context rhinoContext = Context.enter();
+                rhinoContext.setLanguageVersion(((RhinoJavaScriptEngineFactory)getFactory()).rhinoLanguageVersion());
                 rhinoContext.setOptimizationLevel(optimizationLevel());
 
                 if (ScriptRuntime.hasTopCall(rhinoContext)) {

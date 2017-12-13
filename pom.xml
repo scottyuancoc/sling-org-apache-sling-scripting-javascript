@@ -41,6 +41,10 @@
         <url>https://gitbox.apache.org/repos/asf?p=sling-org-apache-sling-scripting-javascript.git</url>
     </scm>
 
+    <properties>
+        <rhino.version>1.7.7.1_1</rhino.version>
+    </properties>
+
     <build>
         <plugins>
             <plugin>
@@ -63,7 +67,7 @@
                             org.apache.sling.commons.osgi;inline="org/apache/sling/commons/osgi/PropertiesUtil.*"
                         </Embed-Dependency>
                         <Provide-Capability>
-                            osgi.implementation;osgi.implementation="org.apache.sling.scripting.javascript.rhinoscriptengine";version:Version="1.7.7.1"
+                            osgi.implementation;osgi.implementation="org.apache.sling.scripting.javascript.rhinoscriptengine";version:Version="${rhino.version}"
                         </Provide-Capability>
                         <_removeheaders>
                           Embed-Dependency,
@@ -72,6 +76,7 @@
                         </_removeheaders>
                         <ScriptEngine-Name>${project.name}</ScriptEngine-Name>
                         <ScriptEngine-Version>${project.version}</ScriptEngine-Version>
+                        <Rhino-Version>${rhino.version}</Rhino-Version>
                     </instructions>
                 </configuration>
             </plugin>
@@ -145,9 +150,9 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.mozilla</groupId>
-            <artifactId>rhino</artifactId>
-            <version>1.7.7.1</version>
+            <groupId>org.apache.servicemix.bundles</groupId>
+            <artifactId>org.apache.servicemix.bundles.rhino</artifactId>
+            <version>${rhino.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
