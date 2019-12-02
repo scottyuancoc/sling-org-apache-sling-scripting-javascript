@@ -239,18 +239,16 @@ public class RhinoJavaScriptEngineFactory extends AbstractScriptEngineFactory im
         InputStream ins = null;
         try {
             Enumeration<URL> resources = RhinoJavaScriptEngineFactory.class.getClassLoader().getResources("META-INF/MANIFEST.MF");
-            boolean foundEntries = false;
-            while (resources.hasMoreElements() && !foundEntries) {
+            while (resources.hasMoreElements()) {
                 try {
                     URL url = resources.nextElement();
                     ins = url.openStream();
                     if (ins != null) {
                         Manifest manifest = new Manifest(ins);
                         Attributes attrs = manifest.getMainAttributes();
-                        String bundleName = attrs.getValue("Bundle-Name");
-                        if (bundleName != null && "Apache Sling Scripting JavaScript Support".equals(bundleName)) {
-                            rhinoVersion = attrs.getValue("Rhino-Version");
-                            foundEntries = true;
+                        rhinoVersion = attrs.getValue("Rhino-Version");
+                        if (rhinoVersion != null) {
+                            break;
                         }
                     }
                 } finally {
