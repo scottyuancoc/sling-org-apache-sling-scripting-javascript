@@ -32,7 +32,7 @@
     <version>3.0.5-SNAPSHOT</version>
     <packaging>bundle</packaging>
 
-    <name>Apache Sling Scripting JavaScript Support</name>
+    <name>Apache Sling Scripting JavaScript</name>
     <description>Support for JavaScript scripting</description>
 
     <scm>
