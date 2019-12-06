@@ -21,7 +21,6 @@ package org.apache.sling.scripting.javascript.helper;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.sling.api.scripting.LazyBindings;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.WrapFactory;
@@ -68,11 +67,7 @@ public class SlingWrapFactory extends WrapFactory {
         }
 
         if (result == null) {
-            if (javaObject instanceof LazyBindings.Supplier) {
-                result = super.wrapAsJavaObject(cx, scope, ((LazyBindings.Supplier) javaObject).get(), staticType);
-            } else {
-                result = super.wrapAsJavaObject(cx, scope, javaObject, staticType);
-            }
+            result = super.wrapAsJavaObject(cx, scope, javaObject, staticType);
         }
 
         return result;

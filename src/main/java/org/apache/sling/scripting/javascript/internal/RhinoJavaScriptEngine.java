@@ -32,6 +32,7 @@ import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.sling.api.scripting.LazyBindings;
 import org.apache.sling.api.scripting.SlingBindings;
 import org.apache.sling.api.scripting.SlingScriptHelper;
 import org.apache.sling.commons.classloader.DynamicClassLoader;
@@ -169,6 +170,9 @@ public class RhinoJavaScriptEngine extends AbstractSlingScriptEngine implements 
             Entry<?, ?> entry = (Entry<?, ?>) entryObject;
             String name = (String) entry.getKey();
             Object value = entry.getValue();
+            if (value instanceof LazyBindings.Supplier) {
+                value = ((LazyBindings.Supplier) value).get();
+            }
 
             if (value != null) {
                 // get the current property value, if set

@@ -23,6 +23,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 
+import org.apache.sling.api.scripting.LazyBindings;
 import org.apache.sling.scripting.api.ScriptCache;
 import org.apache.sling.scripting.javascript.helper.SlingWrapFactory;
 import org.mockito.Mockito;
@@ -49,6 +50,33 @@ public class RhinoJavaScriptEngineTest extends TestCase {
         }
         assertTrue(result instanceof Double);
         assertEquals(2.0, result);
+    }
+
+    public void testNullSuppliedValue() throws ScriptException {
+        MockRhinoJavaScriptEngineFactory factory = new MockRhinoJavaScriptEngineFactory();
+        ScriptEngine engine = factory.getScriptEngine();
+        Bindings context = new LazyBindings();
+        context.put("suppliedNullValue", (LazyBindings.Supplier) () -> null);
+        Object result = engine.eval("1 + 1", context);
+        assertEquals(2, result);
+        Throwable throwable = null;
+        try {
+            engine.eval("suppliedNullValue === undefined", context);
+        } catch (ScriptException e) {
+            throwable = e;
+        }
+        assertNotNull(throwable);
+        assertTrue(throwable.getMessage().contains("\"suppliedNullValue\" is not defined"));
+    }
+
+    public void testNotNullSuppliedValue() throws ScriptException {
+        MockRhinoJavaScriptEngineFactory factory = new MockRhinoJavaScriptEngineFactory();
+        ScriptEngine engine = factory.getScriptEngine();
+        Bindings context = new LazyBindings();
+        context.put("suppliedNotNullValue", (LazyBindings.Supplier) () -> 42);
+        Object result = engine.eval("0 + suppliedNotNullValue", context);
+        // Java provided values will be wrapped and then unwrapped as Doubles
+        assertEquals(42.0, result);
     }
 
     private static class MockRhinoJavaScriptEngineFactory extends RhinoJavaScriptEngineFactory {
