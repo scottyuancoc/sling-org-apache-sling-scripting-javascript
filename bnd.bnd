@@ -1,0 +1,4 @@
+ScriptEngine-Name: ${project.name}
+ScriptEngine-Version: ${project.version}
+Rhino-Version: ${rhino.version}
+Provide-Capability: osgi.implementation;osgi.implementation="org.apache.sling.scripting.javascript.rhinoscriptengine";version:Version="${rhino.version}"
