@@ -760,7 +760,7 @@ public class EspReader extends FilterReader {
      * Injects a string into the input stream, sets the number of characters to
      * return verbatim and change state. The state change only happens if we are
      * not in verbatim state already. Else the current string is simply
-     * prepended to the previous inhjection. This is simply a convenience method
+     * prepended to the previous injection. This is simply a convenience method
      * ;-)
      *
      * @param verbatimString The string to inject into the input stream
