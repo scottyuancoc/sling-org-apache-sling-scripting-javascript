@@ -25,6 +25,8 @@ import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -138,8 +140,26 @@ public class RhinoJavaScriptEngineFactory extends AbstractScriptEngineFactory im
     @Reference
     private ScriptCache scriptCache = null;
 
+    // SLING-9792
+    private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
+    private final Lock readLock = rwl.readLock();
+    private final Lock writeLock = rwl.writeLock();
+    private volatile boolean active = false;
+
     public ScriptEngine getScriptEngine() {
-        return new RhinoJavaScriptEngine(this, getRootScope(), scriptCache);
+        ScriptEngine se = null;
+        readLock.lock();
+        try {
+            if (active) {
+                se = new RhinoJavaScriptEngine(this, getRootScope(), scriptCache);
+            } else {
+                log.warn("getScriptEngine() called, but this component is not active.");
+            }
+        } finally {
+            readLock.unlock();
+        }
+
+        return se;
     }
 
     public String getLanguageName() {
@@ -174,7 +194,19 @@ public class RhinoJavaScriptEngineFactory extends AbstractScriptEngineFactory im
     }
 
     public Scriptable getScope() {
-        return getRootScope();
+        Scriptable scope = null;
+        readLock.lock();
+        try {
+            if (active) {
+                scope = getRootScope();
+            } else {
+                log.warn("getScope() called, but this component is not active.");
+            }
+        } finally {
+            readLock.unlock();
+        }
+
+        return scope;
     }
 
     SlingWrapFactory getWrapFactory() {
@@ -266,44 +298,56 @@ public class RhinoJavaScriptEngineFactory extends AbstractScriptEngineFactory im
 
         optimizationLevel = readOptimizationLevel(configuration);
 
-        // setup the wrap factory
-        wrapFactory = new SlingWrapFactory();
+        writeLock.lock();
+        try {
+            // setup the wrap factory
+            wrapFactory = new SlingWrapFactory();
 
-        // initialize the Rhino Context Factory
-        SlingContextFactory.setup(this, RHINO_LANGUAGE_VERSION);
+            // initialize the Rhino Context Factory
+            SlingContextFactory.setup(this, RHINO_LANGUAGE_VERSION);
 
-        setEngineName(getEngineName() + " (Rhino " + (rhinoVersion != null ? rhinoVersion : "unknown") + ")");
+            setEngineName(getEngineName() + " (Rhino " + (rhinoVersion != null ? rhinoVersion : "unknown") + ")");
 
-        setExtensions(PropertiesUtil.toStringArray(props.get("extensions")));
-        setMimeTypes(PropertiesUtil.toStringArray(props.get("mimeTypes")));
-        setNames(PropertiesUtil.toStringArray(props.get("names")));
+            setExtensions(PropertiesUtil.toStringArray(props.get("extensions")));
+            setMimeTypes(PropertiesUtil.toStringArray(props.get("mimeTypes")));
+            setNames(PropertiesUtil.toStringArray(props.get("names")));
 
-        final ContextFactory contextFactory = ContextFactory.getGlobal();
-        if (contextFactory instanceof SlingContextFactory) {
-            ((SlingContextFactory) contextFactory).setDebugging(debugging);
+            final ContextFactory contextFactory = ContextFactory.getGlobal();
+            if (contextFactory instanceof SlingContextFactory) {
+                ((SlingContextFactory) contextFactory).setDebugging(debugging);
+            }
+            // set the dynamic class loader as the application class loader
+            final DynamicClassLoaderManager dclm = this.dynamicClassLoaderManager;
+            if (dclm != null) {
+                contextFactory.initApplicationClassLoader(dynamicClassLoaderManager.getDynamicClassLoader());
+            }
+
+            log.info("Activated with optimization level {}", optimizationLevel);
+            active = true;
+        } finally {
+            writeLock.unlock();
         }
-        // set the dynamic class loader as the application class loader
-        final DynamicClassLoaderManager dclm = this.dynamicClassLoaderManager;
-        if (dclm != null) {
-            contextFactory.initApplicationClassLoader(dynamicClassLoaderManager.getDynamicClassLoader());
-        }
-
-        log.info("Activated with optimization level {}", optimizationLevel);
     }
 
     @Deactivate
     @SuppressWarnings("unused")
     protected void deactivate(ComponentContext context) {
+        writeLock.lock();
+        try {
+            // remove the root scope
+            dropRootScope();
 
-        // remove the root scope
-        dropRootScope();
+            // remove our context factory
+            SlingContextFactory.teardown();
 
-        // remove our context factory
-        SlingContextFactory.teardown();
+            // remove references
+            wrapFactory = null;
+            hostObjectProvider.clear();
 
-        // remove references
-        wrapFactory = null;
-        hostObjectProvider.clear();
+            active = false;
+        } finally {
+            writeLock.unlock();
+        }
     }
 
     @SuppressWarnings("unused")
