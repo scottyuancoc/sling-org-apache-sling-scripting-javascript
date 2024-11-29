@@ -27,12 +27,15 @@ import javax.jcr.Value;
 
 import org.apache.sling.scripting.javascript.RepositoryScriptingTestBase;
 import org.apache.sling.scripting.javascript.internal.ScriptEngineHelper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 
 /** Test the ScriptableNode class "live", by retrieving
  *  Nodes from a Repository and executing javascript code
  *  using them.
  */
-public class ScriptableNodeTest extends RepositoryScriptingTestBase {
+class ScriptableNodeTest extends RepositoryScriptingTestBase {
 
     private Node node;
     private Property textProperty;
@@ -44,6 +47,7 @@ public class ScriptableNodeTest extends RepositoryScriptingTestBase {
     private ScriptEngineHelper.Data data;
 
     @Override
+    @BeforeEach
     protected void setUp() throws Exception {
         super.setUp();
 
@@ -68,7 +72,8 @@ public class ScriptableNodeTest extends RepositoryScriptingTestBase {
         data.put("calProperty", calProperty);
     }
 
-    public void testDefaultValue() throws Exception {
+    @Test
+    void testDefaultValue() throws Exception {
         final ScriptEngineHelper.Data data = new ScriptEngineHelper.Data();
         data.put("node", getTestRootNode());
         assertEquals(
@@ -77,7 +82,8 @@ public class ScriptableNodeTest extends RepositoryScriptingTestBase {
         );
     }
 
-    public void testPrimaryNodeType() throws Exception {
+    @Test
+    void testPrimaryNodeType() throws Exception {
         final ScriptEngineHelper.Data data = new ScriptEngineHelper.Data();
         data.put("node", getTestRootNode());
         assertEquals(
@@ -86,7 +92,8 @@ public class ScriptableNodeTest extends RepositoryScriptingTestBase {
         );
     }
 
-    public void testPrimaryNodeTypeProperty() throws Exception {
+    @Test
+    void testPrimaryNodeTypeProperty() throws Exception {
         final ScriptEngineHelper.Data data = new ScriptEngineHelper.Data();
         data.put("node", getTestRootNode());
         assertEquals(
@@ -95,56 +102,64 @@ public class ScriptableNodeTest extends RepositoryScriptingTestBase {
         );
     }
 
-    public void testViaPropertyNoWrappers() throws Exception {
+    @Test
+    void testViaPropertyNoWrappers() throws Exception {
         assertEquals(
             testText,
             script.evalToString("out.print(property.value.string)", data)
         );
     }
 
-    public void testViaPropertyWithWrappers() throws Exception {
+    @Test
+    void testViaPropertyWithWrappers() throws Exception {
         assertEquals(
             textProperty.getString(),
             script.evalToString("out.print(property)", data)
         );
     }
 
-    public void testViaNodeDirectPropertyAccess() throws Exception {
+    @Test
+    void testViaNodeDirectPropertyAccess() throws Exception {
         assertEquals(
             testText,
             script.evalToString("out.print(node.text)", data)
         );
     }
 
-    public void testViaPropertyNoWrappersNum() throws Exception {
+    @Test
+    void testViaPropertyNoWrappersNum() throws Exception {
         assertEquals(
             testNum,
             script.eval("numProperty.value.getDouble()", data)
         );
     }
 
-    public void testViaPropertyWithWrappersNum() throws Exception {
+    @Test
+    void testViaPropertyWithWrappersNum() throws Exception {
         assertEquals(
             testNum,
             script.eval("0+numProperty", data)
         );
     }
 
-    public void testViaNodeDirectPropertyAccessNum() throws Exception {
+    @Test
+    void testViaNodeDirectPropertyAccessNum() throws Exception {
         assertEquals(
             testNum,
             script.eval("node.num", data)
         );
     }
 
-    public void testViaPropertyNoWrappersCal() throws Exception {
+    @Test
+    void testViaPropertyNoWrappersCal() throws Exception {
         assertEquals(
                 testCal.getTimeInMillis(),
                 script.eval("calProperty.value.getDate().getTimeInMillis()", data)
         );
     }
 
-    public void testViaNodeDirectPropertyAccessCal() throws Exception {
+    @Test
+    void testViaNodeDirectPropertyAccessCal() throws Exception {
     	final SimpleDateFormat f = new SimpleDateFormat(ScriptableCalendar.ECMA_DATE_FORMAT, ScriptableCalendar.DATE_FORMAT_LOCALE);
     	final String expected = f.format(testCal.getTime());
         assertEquals(
@@ -153,14 +168,16 @@ public class ScriptableNodeTest extends RepositoryScriptingTestBase {
         );
     }
 
-    public void testCalDateClass() throws Exception {
+    @Test
+    void testCalDateClass() throws Exception {
         assertEquals(
                 "number",
                 script.evalToString("out.print(typeof node.cal.date.time)", data)
         );
     }
 
-    public void testPropertyParent() throws Exception {
+    @Test
+    void testPropertyParent() throws Exception {
         // need to use node.getProperty('num') to have a ScriptableProperty,
         // node.num only returns a wrapped value
         assertEquals(
@@ -169,7 +186,8 @@ public class ScriptableNodeTest extends RepositoryScriptingTestBase {
         );
     }
 
-    public void testPropertyAncestor() throws Exception {
+    @Test
+    void testPropertyAncestor() throws Exception {
         // call getAncestor which is not explicitly defined in ScriptableProperty,
         // to verify that all Property methods are available and that we get a
         // correctly wrapped result (SLING-397)
@@ -179,7 +197,8 @@ public class ScriptableNodeTest extends RepositoryScriptingTestBase {
         );
     }
 
-    public void testPropertiesIterationNoWrapper() throws Exception {
+    @Test
+    void testPropertiesIterationNoWrapper() throws Exception {
         final String code =
             "var props = node.getProperties();"
             + " for(i in props) { out.print(props[i].name); out.print(' '); }"
@@ -191,7 +210,8 @@ public class ScriptableNodeTest extends RepositoryScriptingTestBase {
         }
     }
 
-    public void testAddNodeDefaultType() throws Exception {
+    @Test
+    void testAddNodeDefaultType() throws Exception {
         final String path = "subdt_" + System.currentTimeMillis();
         final String code =
             "var n = node.addNode('" + path + "');\n"
@@ -200,7 +220,8 @@ public class ScriptableNodeTest extends RepositoryScriptingTestBase {
         assertEquals("nt:unstructured", script.evalToString(code, data));
     }
 
-    public void testAddNodeSpecificType() throws Exception {
+    @Test
+    void testAddNodeSpecificType() throws Exception {
         final String path = "subst_" + System.currentTimeMillis();
         final String code =
             "var n = node.addNode('" + path + "', 'nt:folder');\n"
@@ -209,7 +230,8 @@ public class ScriptableNodeTest extends RepositoryScriptingTestBase {
         assertEquals("nt:folder", script.evalToString(code, data));
     }
 
-    public void testGetNode() throws Exception {
+    @Test
+    void testGetNode() throws Exception {
         final String path = "subgn_" + System.currentTimeMillis();
         final String code =
             "node.addNode('" + path + "', 'nt:resource');\n"
@@ -219,12 +241,14 @@ public class ScriptableNodeTest extends RepositoryScriptingTestBase {
         assertEquals("nt:resource", script.evalToString(code, data));
     }
 
-    public void testGetProperty() throws Exception {
+    @Test
+    void testGetProperty() throws Exception {
         final String code = "out.print(node.getProperty('text'));";
         assertEquals(testText, script.evalToString(code, data));
     }
 
-    public void testGetNodesNoPattern() throws Exception {
+    @Test
+    void testGetNodesNoPattern() throws Exception {
         final String path = "subgnnp_" + System.currentTimeMillis();
         final String code =
             "node.addNode('" + path + "_A');\n"
@@ -235,7 +259,8 @@ public class ScriptableNodeTest extends RepositoryScriptingTestBase {
         assertEquals(path + "_A " + path + "_B ", script.evalToString(code, data));
     }
 
-    public void testGetNodesWithPattern() throws Exception {
+    @Test
+    void testGetNodesWithPattern() throws Exception {
         final String path = "subgnnp_" + System.currentTimeMillis();
         final String code =
             "node.addNode('1_" + path + "_A');\n"
@@ -247,7 +272,8 @@ public class ScriptableNodeTest extends RepositoryScriptingTestBase {
         assertEquals("1_" + path + "_A 1_" + path + "_B ", script.evalToString(code, data));
     }
 
-    public void testRemoveNode() throws Exception {
+    @Test
+    void testRemoveNode() throws Exception {
         final String code =
             "node.addNode('toremove');\n"
             + "out.print(node.hasNode('toremove'))\n"
@@ -259,12 +285,14 @@ public class ScriptableNodeTest extends RepositoryScriptingTestBase {
     }
 
     /** Test SLING-389 */
-    public void testForCurrentNode() throws Exception {
+    @Test
+    void testForCurrentNode() throws Exception {
         final String code = "for (var a in node) {}; out.print('ok')";
         assertEquals("ok", script.evalToString(code, data));
     }
 
-    public void testChildNodeAccess() throws Exception {
+    @Test
+    void testChildNodeAccess() throws Exception {
         final String path = "subtcna_" + System.currentTimeMillis();
         final String code =
             "node.addNode('" + path + "');\n"
@@ -280,7 +308,8 @@ public class ScriptableNodeTest extends RepositoryScriptingTestBase {
     /** Verify that the getAncestor() method (which is not explicitely defined in ScriptableNode)
      *  is available, to check SLING-397.
      */
-    public void testGetAncestor() throws Exception {
+    @Test
+    void testGetAncestor() throws Exception {
         {
             final String code = "out.print(node.getAncestor(0).getPath());";
             assertEquals("/", script.evalToString(code, data));
@@ -292,7 +321,8 @@ public class ScriptableNodeTest extends RepositoryScriptingTestBase {
         }
     }
 
-    public void testIsNodeType() throws Exception {
+    @Test
+    void testIsNodeType() throws Exception {
         final String code =
             "out.print(node.isNodeType('nt:unstructured'));\n"
             + "out.print(' ');\n"
@@ -301,7 +331,8 @@ public class ScriptableNodeTest extends RepositoryScriptingTestBase {
         assertEquals("true false", script.evalToString(code, data));
     }
 
-    public void testGetSession() throws Exception {
+    @Test
+    void testGetSession() throws Exception {
         assertEquals(
                 "Root node found via node.session",
                 "/",
@@ -318,7 +349,8 @@ public class ScriptableNodeTest extends RepositoryScriptingTestBase {
      * Test for regressing this issue:
      * https://issues.apache.org/jira/browse/SLING-534
      */
-    public void testMultiValReferencePropLookup() throws Exception {
+    @Test
+    void testMultiValReferencePropLookup() throws Exception {
         Node refNode1 = getNewNode();
         refNode1.addMixin("mix:referenceable");
         Node refNode2 = getNewNode();

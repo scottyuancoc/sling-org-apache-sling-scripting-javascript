@@ -31,13 +31,18 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.Scriptable;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-public class RhinoJavaScriptEngineTest extends TestCase {
+class RhinoJavaScriptEngineTest {
 
     private static ScriptCache scriptCache = Mockito.mock(ScriptCache.class);
 
-    public void testPreserveScopeBetweenEvals() throws ScriptException {
+    @Test
+    void testPreserveScopeBetweenEvals() throws ScriptException {
         MockRhinoJavaScriptEngineFactory factory = new MockRhinoJavaScriptEngineFactory();
         ScriptEngine engine = factory.getScriptEngine();
         Bindings context = new SimpleBindings();
@@ -46,13 +51,14 @@ public class RhinoJavaScriptEngineTest extends TestCase {
         try {
             result = engine.eval("f += 1", context);
         } catch (ScriptException e) {
-            TestCase.fail(e.getMessage());
+            fail(e.getMessage());
         }
         assertTrue(result instanceof Double);
         assertEquals(2.0, result);
     }
 
-    public void testNullSuppliedValue() throws ScriptException {
+    @Test
+    void testNullSuppliedValue() throws ScriptException {
         MockRhinoJavaScriptEngineFactory factory = new MockRhinoJavaScriptEngineFactory();
         ScriptEngine engine = factory.getScriptEngine();
         Bindings context = new LazyBindings();
@@ -69,7 +75,8 @@ public class RhinoJavaScriptEngineTest extends TestCase {
         assertTrue(throwable.getMessage().contains("\"suppliedNullValue\" is not defined"));
     }
 
-    public void testNotNullSuppliedValue() throws ScriptException {
+    @Test
+    void testNotNullSuppliedValue() throws ScriptException {
         MockRhinoJavaScriptEngineFactory factory = new MockRhinoJavaScriptEngineFactory();
         ScriptEngine engine = factory.getScriptEngine();
         Bindings context = new LazyBindings();

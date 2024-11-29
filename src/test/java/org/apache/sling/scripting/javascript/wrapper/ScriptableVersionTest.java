@@ -22,14 +22,17 @@ import javax.jcr.Node;
 
 import org.apache.sling.scripting.javascript.RepositoryScriptingTestBase;
 import org.apache.sling.scripting.javascript.internal.ScriptEngineHelper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /** Test access to Version and VersionHistory objects */
-public class ScriptableVersionTest extends RepositoryScriptingTestBase {
+class ScriptableVersionTest extends RepositoryScriptingTestBase {
 
     private Node node;
     private ScriptEngineHelper.Data data = new ScriptEngineHelper.Data();
 
     @Override
+    @BeforeEach
     protected void setUp() throws Exception {
         super.setUp();
 
@@ -42,22 +45,26 @@ public class ScriptableVersionTest extends RepositoryScriptingTestBase {
         getSession().save();
     }
 
-    public void testVersionHistoryAccess() throws Exception {
+    @Test
+    void testVersionHistoryAccess() throws Exception {
         Object result = script.eval("node.getVersionHistory().getAllVersions()", data);
         assertNotNull(result);
     }
 
-    public void testVersionHistoryIsWrapped() throws Exception {
+    @Test
+    void testVersionHistoryIsWrapped() throws Exception {
         assertEquals("nt:versionHistory", script.eval("node.versionHistory['jcr:primaryType']", data));
         assertEquals("nt:version", script.eval("node.versionHistory.rootVersion['jcr:primaryType']", data));
     }
 
-    public void testVersionAccess() throws Exception {
+    @Test
+    void testVersionAccess() throws Exception {
         Object result = script.eval("node.getBaseVersion().getCreated()", data);
         assertNotNull(result);
     }
 
-    public void testVersionIsWrapped() throws Exception {
+    @Test
+    void testVersionIsWrapped() throws Exception {
         assertEquals("nt:version", script.eval("node.baseVersion['jcr:primaryType']", data));
         assertNotNull(script.eval("node.baseVersion.created", data));
     }
