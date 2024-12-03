@@ -24,22 +24,23 @@ import javax.script.ScriptEngineFactory;
 
 import org.apache.sling.commons.classloader.DynamicClassLoaderManager;
 import org.apache.sling.scripting.api.ScriptCache;
-import org.apache.sling.testing.mock.osgi.junit.OsgiContext;
-import org.junit.Rule;
-import org.junit.Test;
+import org.apache.sling.testing.mock.osgi.junit5.OsgiContext;
+import org.apache.sling.testing.mock.osgi.junit5.OsgiContextExtension;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class RhinoJavaScriptEngineFactoryTest {
+@ExtendWith(OsgiContextExtension.class)
+class RhinoJavaScriptEngineFactoryTest {
 
-    @Rule
-    public OsgiContext context = new OsgiContext();
+    private final OsgiContext context = new OsgiContext();
 
     @Test
-    public void testRegistrationProperties() {
+    void testRegistrationProperties() {
         DynamicClassLoaderManager dynamicClassLoaderManager = mock(DynamicClassLoaderManager.class);
         when(dynamicClassLoaderManager.getDynamicClassLoader()).thenReturn(RhinoJavaScriptEngineFactoryTest.class.getClassLoader());
         context.registerService(DynamicClassLoaderManager.class, dynamicClassLoaderManager);
@@ -49,7 +50,7 @@ public class RhinoJavaScriptEngineFactoryTest {
         assertEquals(Arrays.asList("rhino", "Rhino", "javascript", "JavaScript", "ecmascript", "ECMAScript"), instance.getNames());
         assertEquals("ECMAScript", instance.getLanguageName());
         assertEquals("partial ECMAScript 2015 support", instance.getLanguageVersion());
-        assertTrue("Unexpected engine name", instance.getEngineName() != null && instance.getEngineName().contains("Rhino 1.7.7.1_1"));
+        assertTrue( instance.getEngineName() != null && instance.getEngineName().contains("Rhino 1.7.7.1_1"), "Unexpected engine name" );
     }
 
 }

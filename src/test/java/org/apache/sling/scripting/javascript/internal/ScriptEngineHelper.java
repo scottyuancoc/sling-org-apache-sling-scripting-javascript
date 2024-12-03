@@ -52,13 +52,13 @@ public class ScriptEngineHelper {
     private static ScriptCache scriptCache;
 
     @Mock
-    private static RhinoJavaScriptEngineFactoryConfiguration configuration;
+    private RhinoJavaScriptEngineFactoryConfiguration factoryConfiguration;
 
     @InjectMocks
     private RhinoJavaScriptEngineFactory factory;
 
     public ScriptEngineHelper() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
     }
 
     public static class Data extends HashMap<String, Object> {
@@ -67,9 +67,7 @@ public class ScriptEngineHelper {
     private ScriptEngine getEngine() {
         if (engine == null) {
             synchronized (ScriptEngineHelper.class) {
-                final RhinoMockComponentContext componentContext = new RhinoMockComponentContext();
-                final RhinoJavaScriptEngineFactoryConfiguration configuration = mock(RhinoJavaScriptEngineFactoryConfiguration.class);
-                factory.activate(componentContext, configuration);
+                factory.activate( new RhinoMockComponentContext(), factoryConfiguration);
                 engine = factory.getScriptEngine();
             }
         }
