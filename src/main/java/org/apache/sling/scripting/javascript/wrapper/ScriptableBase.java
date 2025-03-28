@@ -47,7 +47,7 @@ public abstract class ScriptableBase extends ScriptableObject {
             return Scriptable.NOT_FOUND;
         }
 
-        if(njo == null) {
+        if (njo == null) {
             njo = new NativeJavaObject(start, wrapped, getStaticType());
         }
 
