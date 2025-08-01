@@ -21,6 +21,7 @@ package org.apache.sling.scripting.javascript.wrapper;
 import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.mozilla.javascript.NativeJavaObject;
 import org.mozilla.javascript.Scriptable;
@@ -31,12 +32,13 @@ import org.mozilla.javascript.ScriptableObject;
  */
 public abstract class ScriptableBase extends ScriptableObject {
 
-    private NativeJavaObject njo;
+    private static final NativeJavaObject NULL_OBJECT = new NativeJavaObject();
+    private final AtomicReference<NativeJavaObject> atomicNjoReference = new AtomicReference<>(null);
     private final Set<String> jsMethods = getJsMethodNames();
 
     public static final String JSFUNC_PREFIX = "jsFunction_";
 
-    protected synchronized Object getNative(String name, Scriptable start) {
+    protected Object getNative(String name, Scriptable start) {
         final Object wrapped = getWrappedObject();
 
         if (wrapped == null) {
@@ -47,11 +49,11 @@ public abstract class ScriptableBase extends ScriptableObject {
             return Scriptable.NOT_FOUND;
         }
 
-        if (njo == null) {
-            njo = new NativeJavaObject(start, wrapped, getStaticType());
+        // Use a NULL_OBJECT refernece to ensure only one initiation the real NatvieJavaObject.
+        if (atomicNjoReference.compareAndSet(null, NULL_OBJECT)) {
+            atomicNjoReference.compareAndSet(NULL_OBJECT, new NativeJavaObject(start, wrapped, getStaticType()));
         }
-
-        return njo.get(name, start);
+        return atomicNjoReference.get().get(name, start);
     }
 
     /** @return the Java object that we're wrapping, used to create a NativeJavaObject
