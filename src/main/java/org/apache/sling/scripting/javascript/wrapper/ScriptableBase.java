@@ -21,6 +21,7 @@ package org.apache.sling.scripting.javascript.wrapper;
 import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.mozilla.javascript.NativeJavaObject;
 import org.mozilla.javascript.Scriptable;
@@ -31,12 +32,12 @@ import org.mozilla.javascript.ScriptableObject;
  */
 public abstract class ScriptableBase extends ScriptableObject {
 
-    private NativeJavaObject njo;
+    private final AtomicReference<NativeJavaObject> cachedNjo = new AtomicReference<>(null);
     private final Set<String> jsMethods = getJsMethodNames();
 
     public static final String JSFUNC_PREFIX = "jsFunction_";
 
-    protected synchronized Object getNative(String name, Scriptable start) {
+    protected Object getNative(String name, Scriptable start) {
         final Object wrapped = getWrappedObject();
 
         if (wrapped == null) {
@@ -47,10 +48,17 @@ public abstract class ScriptableBase extends ScriptableObject {
             return Scriptable.NOT_FOUND;
         }
 
+        // Use AtomicReference-based caching with double-checked locking to ensure
+        // that NativeJavaObject is initialized only once in a thread-safe manner.
+        NativeJavaObject njo = cachedNjo.get();
         if (njo == null) {
-            njo = new NativeJavaObject(start, wrapped, getStaticType());
+            synchronized (this) {
+                if (cachedNjo.get() == null) {
+                    cachedNjo.set(new NativeJavaObject(start, wrapped, getStaticType()));
+                }
+            }
+            njo = cachedNjo.get();
         }
-
         return njo.get(name, start);
     }
 
