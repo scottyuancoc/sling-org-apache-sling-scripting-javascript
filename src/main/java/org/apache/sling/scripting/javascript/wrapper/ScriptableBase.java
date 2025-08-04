@@ -36,7 +36,8 @@ public abstract class ScriptableBase extends ScriptableObject {
 
     public static final String JSFUNC_PREFIX = "jsFunction_";
 
-    protected synchronized Object getNative(String name, Scriptable start) {
+    /** Not thread-safe: designed for use in single-threaded environments only. */
+    protected Object getNative(String name, Scriptable start) {
         final Object wrapped = getWrappedObject();
 
         if (wrapped == null) {
