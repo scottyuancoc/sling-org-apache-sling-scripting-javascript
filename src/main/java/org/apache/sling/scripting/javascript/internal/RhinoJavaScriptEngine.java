@@ -44,6 +44,7 @@ import org.apache.sling.scripting.api.ScriptCache;
 import org.apache.sling.scripting.api.ScriptNameAware;
 import org.apache.sling.scripting.core.ScriptNameAwareReader;
 import org.apache.sling.scripting.javascript.io.EspReader;
+import org.jetbrains.annotations.NotNull;
 import org.mozilla.javascript.ClassCache;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ImporterTopLevel;
@@ -70,12 +71,13 @@ public class RhinoJavaScriptEngine extends AbstractSlingScriptEngine implements 
     private Scriptable rootScope;
     private ScriptCache scriptCache;
 
-    public RhinoJavaScriptEngine(ScriptEngineFactory factory, Scriptable rootScope, ScriptCache scriptCache) {
+    public RhinoJavaScriptEngine(ScriptEngineFactory factory, Scriptable rootScope, @NotNull ScriptCache scriptCache) {
         super(factory);
         this.rootScope = rootScope;
         this.scriptCache = scriptCache;
     }
 
+    @Override
     public CompiledScript compile(String script) throws ScriptException {
         Reader reader = null;
         try {
@@ -86,6 +88,7 @@ public class RhinoJavaScriptEngine extends AbstractSlingScriptEngine implements 
         }
     }
 
+    @Override
     public CompiledScript compile(Reader scriptReader) throws ScriptException {
         final String scriptName = getScriptName(scriptReader);
         CachedScript cachedScript = scriptCache.getScript(scriptName);
@@ -138,6 +141,7 @@ public class RhinoJavaScriptEngine extends AbstractSlingScriptEngine implements 
         }
     }
 
+    @Override
     public Object eval(Reader scriptReader, ScriptContext scriptContext) throws ScriptException {
         String scriptName = getScriptName(scriptReader);
         Reader reader = wrapReaderIfEspScript(scriptReader, scriptName);

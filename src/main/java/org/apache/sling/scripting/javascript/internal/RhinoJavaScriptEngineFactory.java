@@ -186,6 +186,7 @@ public class RhinoJavaScriptEngineFactory extends AbstractScriptEngineFactory im
         return Context.VERSION_ES6;
     }
 
+    @Override
     public Object getParameter(String name) {
         if ("THREADING".equals(name)) {
             return "MULTITHREADED";
@@ -194,6 +195,7 @@ public class RhinoJavaScriptEngineFactory extends AbstractScriptEngineFactory im
         return super.getParameter(name);
     }
 
+    @Override
     public Scriptable getScope() {
         Scriptable scope = null;
         readLock.lock();
